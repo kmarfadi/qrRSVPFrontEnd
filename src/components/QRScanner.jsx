@@ -31,23 +31,44 @@ const QRScanner = () => {
       return false;
     }
   };
-
   const startScanner = () => {
     if (!isPasswordValid) {
-      setLocalStatus({ type: 'error', message: 'Please verify password first' });
-      setGlobalStatus({ type: 'error', message: 'Please verify password first' });
+      setLocalStatus({
+        type: 'error',
+        message: 'Please verify password first'
+      });
+      setGlobalStatus({
+        type: 'error',
+        message: 'Please verify password first'
+      });
       return;
     }
-
-    scannerInstance = new Html5QrcodeScanner(
+  
+    if (document.getElementById('reader')?.children.length > 0) {
+      return; // Prevent multiple instances
+    }
+  
+    const scanner = new Html5QrcodeScanner(
       "reader",
-      { fps: 10, qrbox: { width: 250, height: 250 } },
+      {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+      },
       false
     );
-
-    scannerInstance.render(handleScanSuccess, (errorMessage) => console.warn(errorMessage));
+  
+    scanner.render(
+      (decodedText) => {
+        verifyQRCode(decodedText);
+      },
+      (errorMessage) => {
+        console.warn(errorMessage);
+      }
+    );
+  
     setIsScanning(true);
   };
+  
 
   const stopScanner = () => {
     if (scannerInstance) {
@@ -92,9 +113,10 @@ const QRScanner = () => {
 
   return (
     <div className="min-vh-100 pa3 pa4-ns">
-      <div className="mw7 center">
-        <div className="card">
-          <h1 className="f2 fw6 tc mb4 white">QR Code Scanner</h1>
+      <div className="mw7 center"> 
+        <div className="scanner-container"> 
+        <div className="card ">
+            <h1 className="f2 fw6 tc mb4 white">QR Code Scanner</h1>
 
           {/* Password Input Section */}
           <div className="mb4">
@@ -163,8 +185,10 @@ const QRScanner = () => {
               <div className="last-scan-code">{lastScannedCode}</div>
             </div>
           )}
-        </div>
+           
+           </div>
       </div>
+    </div>
     </div>
   );
 };
