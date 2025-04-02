@@ -1,7 +1,8 @@
 import axios from 'axios';
 
+
 // Use environment variable for API URL with fallback
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = 'https://qrverificationsystemv1-2.onrender.com';
 
 const api = {
   generateQRCodes: async (guestCount) => {

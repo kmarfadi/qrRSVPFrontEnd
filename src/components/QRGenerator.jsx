@@ -36,7 +36,8 @@ const QRGenerator = () => {
     }
     try {
       // Use consistent API URL from services
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_URL = 'https://qrverificationsystemv1-2.onrender.com'; 
+
       const response = await fetch(`${API_URL}/generate`, {
         method: 'POST',
         headers: {
