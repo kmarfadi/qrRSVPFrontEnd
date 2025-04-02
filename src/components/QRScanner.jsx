@@ -60,7 +60,7 @@ const QRScanner = () => {
   
     scanner.render(
       (decodedText) => {
-        verifyQRCode(decodedText);
+        handleScanSuccess(decodedText);
       },
       (errorMessage) => {
         console.warn(errorMessage);
