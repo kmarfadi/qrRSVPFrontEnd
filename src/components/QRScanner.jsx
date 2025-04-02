@@ -12,37 +12,22 @@ const QRScanner = () => {
   const [password, setPassword] = useState('');
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const { setStatus: setGlobalStatus } = useContext(StatusContext);
-  const [scanner, setScanner] = useState(null);
+
+  let scannerInstance = null;
 
   useEffect(() => {
-    return () => {
-      if (scanner) {
-        stopScanner();
-      }
-    };
-  }, [scanner]);
+    return () => stopScanner();
+  }, []);
 
   const verifyPassword = () => {
     if (password === '0000') {
       setIsPasswordValid(true);
-      setLocalStatus({
-        type: 'success',
-        message: 'Password verified successfully!'
-      });
-      setGlobalStatus({
-        type: 'success',
-        message: 'Password verified successfully!'
-      });
+      setLocalStatus({ type: 'success', message: 'Password verified successfully!' });
+      setGlobalStatus({ type: 'success', message: 'Password verified successfully!' });
       return true;
     } else {
-      setLocalStatus({
-        type: 'error',
-        message: 'Invalid password'
-      });
-      setGlobalStatus({
-        type: 'error',
-        message: 'Invalid password'
-      });
+      setLocalStatus({ type: 'error', message: 'Invalid password' });
+      setGlobalStatus({ type: 'error', message: 'Invalid password' });
       return false;
     }
   };
@@ -59,90 +44,81 @@ const QRScanner = () => {
       });
       return;
     }
-
-    const newScanner = new Html5QrcodeScanner(
-      'reader',
+  
+    if (document.getElementById('reader')?.children.length > 0) {
+      return; // Prevent multiple instances
+    }
+  
+    const scanner = new Html5QrcodeScanner(
+      "reader",
       {
-        fps: 10,
+        fps: 2,
         qrbox: { width: 250, height: 250 },
       },
       false
     );
-
-    newScanner.render(
+  
+    scanner.render(
       (decodedText) => {
-        // Only process QR when shutter button is clicked
-        if (isScanning) {
-          verifyQRCode(decodedText);
-        }
+        verifyQRCode(decodedText);
       },
       (errorMessage) => {
         console.warn(errorMessage);
       }
     );
-
-    setScanner(newScanner); // Save the scanner instance
+  
     setIsScanning(true);
   };
+  
 
   const stopScanner = () => {
-    if (scanner) {
-      scanner.clear();
-      setScanner(null); // Reset the scanner instance
-      setIsScanning(false);
+    if (scannerInstance) {
+      scannerInstance.clear();
     }
+    const reader = document.getElementById('reader');
+    if (reader) {
+      reader.innerHTML = '';
+    }
+    setIsScanning(false);
   };
 
-  const verifyQRCode = async (code) => {
-    try {
-      const cleanCode = code.trim();
-      
-      try {
-        const data = await api.verifyQRCode(cleanCode);
-        
-        setLocalStatus({
-          type: 'success',
-          message: data.message
-        });
-        setGlobalStatus({
-          type: 'success',
-          message: data.message
-        });
-        setLastScannedCode(cleanCode);
+  const handleScanSuccess = async (decodedText) => {
+    const cleanCode = decodedText.trim();
+    
+    // Prevent rapid duplicate scans
+    if (cleanCode === lastScannedCode) {
+      return;
+    }
 
-        // Stop scanning after first QR code is detected
-        stopScanner();
-      } catch (error) {
-        const statusType = error.response?.data?.error === 'QR code already used' ? 'error' : 'warning';
-        setLocalStatus({
-          type: statusType,
-          message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code'
-        });
-        setGlobalStatus({
-          type: statusType,
-          message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code'
-        });
-      }
+    setLastScannedCode(cleanCode); // Store last scanned code
+
+    try {
+      const data = await api.verifyQRCode(cleanCode);
+      setLocalStatus({ type: 'success', message: data.message });
+      setGlobalStatus({ type: 'success', message: data.message });
+
+      // Temporarily disable scanning to avoid rapid duplicate scans
+      stopScanner();
+      setTimeout(startScanner, 2000);
+      
     } catch (error) {
-      console.error('Error verifying QR code:', error);
-      const errorMessage = 'Error verifying QR code';
-      setLocalStatus({
-        type: 'error',
-        message: errorMessage
-      });
-      setGlobalStatus({
-        type: 'error',
-        message: errorMessage
-      });
+      const statusType = error.response?.data?.error === 'QR code already used' ? 'error' : 'warning';
+      setLocalStatus({ type: statusType, message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code' });
+      setGlobalStatus({ type: statusType, message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code' });
+      
+      // Temporarily disable scanning to prevent rapid re-scans
+      stopScanner();
+      setTimeout(startScanner, 2000);
     }
   };
 
   return (
+    //make
     <div className="min-vh-100 pa3 pa4-ns">
       <div className="mw7 center">
         <div className="card">
           <h1 className="f2 fw6 tc mb4 white">QR Code Scanner</h1>
-          
+
           {/* Password Input Section */}
           <div className="mb4">
             <input
@@ -166,8 +142,8 @@ const QRScanner = () => {
               </button>
             )}
           </div>
-          
-          {/* Shutter Button */}
+
+          {/* Scanner Controls */}
           <div className="flex flex-column flex-row-ns gap2 mb4">
             {!isScanning ? (
               <button
@@ -175,14 +151,14 @@ const QRScanner = () => {
                 disabled={!isPasswordValid}
                 className={`w-100 pa3 bn br3 f5 pointer ${isPasswordValid ? 'bg-green white hover-bg-dark-green' : 'bg-red white hover-bg-dark-red'}`}
               >
-                Start Camera
+                Start Scanner
               </button>
             ) : (
               <button
-                onClick={() => setIsScanning(true)}  // Trigger scanning with shutter button
-                className="w-100 pa3 bg-blue white bn br3 f5 pointer hover-bg-dark-blue"
+                onClick={stopScanner}
+                className="w-100 pa3 bg-red white bn br3 f5 pointer hover-bg-dark-red"
               >
-                Capture QR Code
+                Stop Scanner
               </button>
             )}
           </div>
