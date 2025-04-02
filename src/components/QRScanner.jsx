@@ -12,14 +12,15 @@ const QRScanner = () => {
   const [password, setPassword] = useState('');
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const { setStatus: setGlobalStatus } = useContext(StatusContext);
+  const [scanner, setScanner] = useState(null);
 
   useEffect(() => {
     return () => {
-      if (isScanning) {
+      if (scanner) {
         stopScanner();
       }
     };
-  }, [isScanning]);
+  }, [scanner]);
 
   const verifyPassword = () => {
     if (password === '0000') {
@@ -59,8 +60,8 @@ const QRScanner = () => {
       return;
     }
 
-    const scanner = new Html5QrcodeScanner(
-      "reader",
+    const newScanner = new Html5QrcodeScanner(
+      'reader',
       {
         fps: 10,
         qrbox: { width: 250, height: 250 },
@@ -68,32 +69,34 @@ const QRScanner = () => {
       false
     );
 
-    scanner.render(
+    newScanner.render(
       (decodedText) => {
-        verifyQRCode(decodedText);
-        stopScanner();  // Stop scanning after QR code is detected
+        // Only process QR when shutter button is clicked
+        if (isScanning) {
+          verifyQRCode(decodedText);
+        }
       },
       (errorMessage) => {
         console.warn(errorMessage);
       }
     );
 
+    setScanner(newScanner); // Save the scanner instance
     setIsScanning(true);
   };
 
   const stopScanner = () => {
-    const reader = document.getElementById('reader');
-    if (reader) {
-      reader.innerHTML = '';
+    if (scanner) {
+      scanner.clear();
+      setScanner(null); // Reset the scanner instance
+      setIsScanning(false);
     }
-    setIsScanning(false);
   };
 
   const verifyQRCode = async (code) => {
     try {
       const cleanCode = code.trim();
       
-      // Use the API service instead of direct fetch
       try {
         const data = await api.verifyQRCode(cleanCode);
         
@@ -106,6 +109,9 @@ const QRScanner = () => {
           message: data.message
         });
         setLastScannedCode(cleanCode);
+
+        // Stop scanning after first QR code is detected
+        stopScanner();
       } catch (error) {
         const statusType = error.response?.data?.error === 'QR code already used' ? 'error' : 'warning';
         setLocalStatus({
@@ -161,26 +167,22 @@ const QRScanner = () => {
             )}
           </div>
           
-          {/* Scanner Controls */}
+          {/* Shutter Button */}
           <div className="flex flex-column flex-row-ns gap2 mb4">
             {!isScanning ? (
               <button
                 onClick={startScanner}
                 disabled={!isPasswordValid}
-                className={`w-100 pa3 bn br3 f5 pointer ${
-                  isPasswordValid 
-                    ? 'bg-green white hover-bg-dark-green' 
-                    : 'bg-red white hover-bg-dark-red'
-                }`}
+                className={`w-100 pa3 bn br3 f5 pointer ${isPasswordValid ? 'bg-green white hover-bg-dark-green' : 'bg-red white hover-bg-dark-red'}`}
               >
-                Start Scanner
+                Start Camera
               </button>
             ) : (
               <button
-                onClick={stopScanner}
-                className="w-100 pa3 bg-red white bn br3 f5 pointer hover-bg-dark-red"
+                onClick={() => setIsScanning(true)}  // Trigger scanning with shutter button
+                className="w-100 pa3 bg-blue white bn br3 f5 pointer hover-bg-dark-blue"
               >
-                Stop Scanner
+                Capture QR Code
               </button>
             )}
           </div>
