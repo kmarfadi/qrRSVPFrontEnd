@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import StatusMessage from './StatusMessage';
 import { StatusContext } from '../App';
-import Html5QrcodeScannerPlugin from '../plugins/Html5QrcodeScannerPlugin';
+//import Html5QrcodeScannerPlugin from '../plugins/Html5QrcodeScannerPlugin';
 import api from '../services/api';
 
 const QRScanner = () => {
