@@ -12,7 +12,7 @@ const QRScanner = () => {
   const [password, setPassword] = useState('');
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const { setStatus: setGlobalStatus } = useContext(StatusContext);
-  const [scanner, setScanner] = useState(null);  // Track scanner instance
+  const [scanner, setScanner] = useState(null);
 
   useEffect(() => {
     return () => {
@@ -71,7 +71,10 @@ const QRScanner = () => {
 
     newScanner.render(
       (decodedText) => {
-        verifyQRCode(decodedText);
+        // Only process QR when shutter button is clicked
+        if (isScanning) {
+          verifyQRCode(decodedText);
+        }
       },
       (errorMessage) => {
         console.warn(errorMessage);
@@ -106,6 +109,9 @@ const QRScanner = () => {
           message: data.message
         });
         setLastScannedCode(cleanCode);
+
+        // Stop scanning after first QR code is detected
+        stopScanner();
       } catch (error) {
         const statusType = error.response?.data?.error === 'QR code already used' ? 'error' : 'warning';
         setLocalStatus({
@@ -161,7 +167,7 @@ const QRScanner = () => {
             )}
           </div>
           
-          {/* Button-Triggered Scanner */}
+          {/* Shutter Button */}
           <div className="flex flex-column flex-row-ns gap2 mb4">
             {!isScanning ? (
               <button
@@ -173,10 +179,10 @@ const QRScanner = () => {
               </button>
             ) : (
               <button
-                onClick={stopScanner}
-                className="w-100 pa3 bg-red white bn br3 f5 pointer hover-bg-dark-red"
+                onClick={() => setIsScanning(true)}  // Trigger scanning with shutter button
+                className="w-100 pa3 bg-blue white bn br3 f5 pointer hover-bg-dark-blue"
               >
-                Stop Camera
+                Capture QR Code
               </button>
             )}
           </div>
