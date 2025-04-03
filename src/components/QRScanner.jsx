@@ -28,6 +28,7 @@ const QRScanner = () => {
     } else {
       setLocalStatus({ type: 'error', message: 'Invalid password' });
       setGlobalStatus({ type: 'error', message: 'Invalid password' });
+      alert('Invalid password');
       return false;
     }
   };
@@ -62,9 +63,12 @@ const QRScanner = () => {
     scanner.render(
       (decodedText) => {
         handleScanSuccess(decodedText);
+        alert('Code scanned: ' + decodedText+ ' ' + localStatus?.type);
       },
       (errorMessage) => {
         console.warn(errorMessage);
+        setLocalStatus({ type: 'error', message: errorMessage });
+        setGlobalStatus({ type: 'error', message: errorMessage });
       }
     );
   
@@ -99,9 +103,7 @@ const QRScanner = () => {
       
       setLocalStatus({ type: 'success', message: data.message });
       setGlobalStatus({ type: 'success', message: data.message });
-      if (data.valid) {
-        alert('Code is valid');
-      }
+      
       // Temporarily disable scanning to avoid rapid duplicate scans
       
     } catch (error) {
@@ -110,9 +112,7 @@ const QRScanner = () => {
       const statusType = error.response?.data?.error === 'QR code already used' ? 'error' : 'warning';
       setLocalStatus({ type: statusType, message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code' });
       setGlobalStatus({ type: statusType, message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code' });
-      if (!data.valid) {
-        alert('Code is not valid');
-      }
+    
       // Temporarily disable scanning to prevent rapid re-scans
       
     }
@@ -189,7 +189,7 @@ const QRScanner = () => {
           {lastScannedCode && (
             <div className="last-scan mt4">
               <h3 className="f5 fw6 mb2">Last Scanned Code:</h3>
-              <div className="last-scan-code">{lastScannedCode} {localStatus?.type === 'success' ? 'Valid' : 'Not Valid'}</div>
+              <div className="last-scan-code">{lastScannedCode} {localStatus}</div>
             </div>
           )}
         </div>
