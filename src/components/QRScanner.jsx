@@ -95,12 +95,9 @@ const QRScanner = () => {
 
     try {
       const data = await api.verifyQRCode(cleanCode);
-      //show chrome notification if code is valid or not
+      //show chrome alert if code is valid or not
       if (data.valid) {
-        new Notification('Code is valid', {
-          body: data.message,
-          icon: 'https://example.com/icon.png'
-        });
+        alert('Code is valid');
       }
       setLocalStatus({ type: 'success', message: data.message });
       setGlobalStatus({ type: 'success', message: data.message });
@@ -108,12 +105,9 @@ const QRScanner = () => {
       // Temporarily disable scanning to avoid rapid duplicate scans
       
     } catch (error) {
-      //show chrome notification if code is not valid
+      //show chrome alert if code is not valid
       if (!data.valid) {
-        new Notification('Code is not valid', {
-          body: data.message,
-          icon: 'https://example.com/icon.png'
-        });
+        alert('Code is not valid');
       }
       const statusType = error.response?.data?.error === 'QR code already used' ? 'error' : 'warning';
       setLocalStatus({ type: statusType, message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code' });
@@ -191,10 +185,11 @@ const QRScanner = () => {
           {localStatus && <StatusMessage type={localStatus.type} message={localStatus.message} />}
 
           {/* Last Scanned Code */}
+          {/* show last scanned code with success or error  */}
           {lastScannedCode && (
             <div className="last-scan mt4">
               <h3 className="f5 fw6 mb2">Last Scanned Code:</h3>
-              <div className="last-scan-code">{lastScannedCode}</div>
+              <div className="last-scan-code">{lastScannedCode} {localStatus?.type === 'success' ? 'Valid' : 'Not Valid'}</div>
             </div>
           )}
         </div>
