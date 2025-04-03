@@ -105,8 +105,7 @@ const QRScanner = () => {
       setGlobalStatus({ type: statusType, message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code' });
       
       // Temporarily disable scanning to prevent rapid re-scans
-      stopScanner();
-      setTimeout(startScanner, 2000);
+      
     }
   };
 
