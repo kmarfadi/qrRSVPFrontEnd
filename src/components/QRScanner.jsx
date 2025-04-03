@@ -45,40 +45,33 @@ const QRScanner = () => {
       });
       return;
     }
-  
+
     if (document.getElementById('reader')?.children.length > 0) {
       return; // Prevent multiple instances
     }
-  
-    const scanner = new Html5QrcodeScanner(
+
+    scannerInstance = new Html5QrcodeScanner(
       "reader",
       {
-        //make scanner once every 2 seconds
-        fps: 0.5,
+        fps: 1, // Reduce FPS to prevent rapid scans
         qrbox: { width: 250, height: 250 },
       },
       false
     );
-  
-    scanner.render(
-      (decodedText) => {
-        handleScanSuccess(decodedText);
-        alert('Code scanned: ' + decodedText+ ' ' + localStatus?.type);
-      },
-      (errorMessage) => {
-        console.warn(errorMessage);
-        setLocalStatus({ type: 'error', message: errorMessage });
-        setGlobalStatus({ type: 'error', message: errorMessage });
-      }
-    );
-  
+
+    scannerInstance.render(handleScanSuccess, (errorMessage) => {
+      console.warn(errorMessage);
+      setLocalStatus({ type: 'error', message: errorMessage });
+      setGlobalStatus({ type: 'error', message: errorMessage });
+    });
+
     setIsScanning(true);
   };
-  
 
   const stopScanner = () => {
     if (scannerInstance) {
       scannerInstance.clear();
+      scannerInstance = null;
     }
     const reader = document.getElementById('reader');
     if (reader) {
@@ -89,32 +82,36 @@ const QRScanner = () => {
 
   const handleScanSuccess = async (decodedText) => {
     const cleanCode = decodedText.trim();
-    
-    // Prevent rapid duplicate scans
+
+    // Prevent duplicate scans
     if (cleanCode === lastScannedCode) {
       return;
     }
 
-    setLastScannedCode(cleanCode); // Store last scanned code
+    setLastScannedCode(cleanCode);
 
     try {
-      const data = await api.verifyQRCode(cleanCode);
-      //show chrome alert if code is valid or not
-      
-      setLocalStatus({ type: 'success', message: data.message });
-      setGlobalStatus({ type: 'success', message: data.message });
-      
-      // Temporarily disable scanning to avoid rapid duplicate scans
-      
+      const response = await api.verifyQRCode(cleanCode);
+      setLocalStatus({ type: 'success', message: response.message });
+      setGlobalStatus({ type: 'success', message: response.message });
+
+      // Stop scanner after a successful scan
+      stopScanner();
+
+      // Use a timeout for non-blocking alert
+      setTimeout(() => {
+        alert('Code scanned successfully!');
+      }, 200);
+
     } catch (error) {
-      //show chrome alert if code is not valid
-      
-      const statusType = error.response?.data?.error === 'QR code already used' ? 'error' : 'warning';
-      setLocalStatus({ type: statusType, message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code' });
-      setGlobalStatus({ type: statusType, message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code' });
-    
-      // Temporarily disable scanning to prevent rapid re-scans
-      
+      const errorMessage = error.response?.data?.error || 'Error verifying QR code';
+      setLocalStatus({ type: 'error', message: errorMessage });
+      setGlobalStatus({ type: 'error', message: errorMessage });
+
+      // Stop scanner only if QR is already used
+      if (errorMessage === 'QR code already used') {
+        stopScanner();
+      }
     }
   };
 
@@ -185,7 +182,6 @@ const QRScanner = () => {
           {localStatus && <StatusMessage type={localStatus.type} message={localStatus.message} />}
 
           {/* Last Scanned Code */}
-          {/* show last scanned code with success or error  */}
           {lastScannedCode && (
             <div className="last-scan mt4">
               <h3 className="f5 fw6 mb2">Last Scanned Code:</h3>
