@@ -12,12 +12,20 @@ const QRScanner = () => {
   const [password, setPassword] = useState('');
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const { setStatus: setGlobalStatus } = useContext(StatusContext);
-
+  
   let scannerInstance = null;
 
   useEffect(() => {
     return () => stopScanner();
   }, []);
+
+  useEffect(() => {
+    if (localStatus?.message) {
+      setTimeout(() => {
+        alert(localStatus.message);
+      }, 200);
+    }
+  }, [localStatus]);
 
   const verifyPassword = () => {
     if (password === '0000') {
@@ -32,37 +40,35 @@ const QRScanner = () => {
       return false;
     }
   };
+
   const startScanner = () => {
     if (!isPasswordValid) {
       setLocalStatus({ type: 'error', message: 'Please verify password first' });
       setGlobalStatus({ type: 'error', message: 'Please verify password first' });
       return;
     }
-  
-    // Ensure the reader element exists before initializing the scanner
+    
     setTimeout(() => {
       const readerElement = document.getElementById("reader");
       if (!readerElement) {
         console.error("QR Scanner div not found!");
         return;
       }
-  
+      
       scannerInstance = new Html5QrcodeScanner(
         "reader",
         { fps: 0.5, qrbox: { width: 250, height: 250 } },
         false
       );
-  
+      
       scannerInstance.render(handleScanSuccess, (errorMessage) => {
-        console.warn(errorMessage);
         setLocalStatus({ type: 'error', message: errorMessage });
         setGlobalStatus({ type: 'error', message: errorMessage });
       });
-  
+      
       setIsScanning(true);
-    }, 100); // Delay execution slightly to ensure rendering
+    }, 100);
   };
-  
 
   const stopScanner = () => {
     if (scannerInstance) {
@@ -79,35 +85,19 @@ const QRScanner = () => {
   const handleScanSuccess = async (decodedText) => {
     const cleanCode = decodedText.trim();
 
-    // Prevent duplicate scans
-    if (cleanCode === lastScannedCode) {
-      return;
-    }
-
+    if (cleanCode === lastScannedCode) return;
     setLastScannedCode(cleanCode);
 
     try {
       const response = await api.verifyQRCode(cleanCode);
       setLocalStatus({ type: 'success', message: response.message });
       setGlobalStatus({ type: 'success', message: response.message });
-
-      // Stop scanner after a successful scan
       stopScanner();
-
-      // Use a timeout for non-blocking alert
-      setTimeout(() => {
-        alert('OK! ' + cleanCode + ' ' + localStatus?.message);
-      }, 200);
-
     } catch (error) {
-      setTimeout(() => {
-        alert('X : ' + error.response?.data?.error);
-      }, 200);  
       const errorMessage = error.response?.data?.error || 'Error verifying QR code';
       setLocalStatus({ type: 'error', message: errorMessage });
       setGlobalStatus({ type: 'error', message: errorMessage });
 
-      // Stop scanner only if QR is already used
       if (errorMessage === 'QR code already used') {
         stopScanner();
       }
@@ -119,8 +109,6 @@ const QRScanner = () => {
       <div className="mw7 center">
         <div className="card">
           <h1 className="f2 fw6 tc mb4 white">QR Code Scanner</h1>
-
-          {/* Password Input Section */}
           <div className="mb4">
             <input
               type="password"
@@ -143,8 +131,6 @@ const QRScanner = () => {
               </button>
             )}
           </div>
-
-          {/* Scanner Controls */}
           <div className="flex flex-column flex-row-ns gap2 mb4">
             {!isScanning ? (
               <button
@@ -163,24 +149,16 @@ const QRScanner = () => {
               </button>
             )}
           </div>
-
-          {/* Scanner Container */}
           <div className="scanner-container">
             <div id="reader"></div>
           </div>
-
-          {/* Error Message */}
           {error && (
             <div className="status-message status-error">
               <span>✗</span>
               <span>Scanning error: {error}</span>
             </div>
           )}
-
-          {/* Local Status Message */}
           {localStatus && <StatusMessage type={localStatus.type} message={localStatus.message} />}
-
-          {/* Last Scanned Code */}
           {lastScannedCode && (
             <div className="last-scan mt4">
               <h3 className="f5 fw6 mb2">Last Scanned Code:</h3>
