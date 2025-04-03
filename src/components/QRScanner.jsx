@@ -98,8 +98,6 @@ const QRScanner = () => {
       setGlobalStatus({ type: 'success', message: data.message });
 
       // Temporarily disable scanning to avoid rapid duplicate scans
-      stopScanner();
-      setTimeout(startScanner, 2000);
       
     } catch (error) {
       const statusType = error.response?.data?.error === 'QR code already used' ? 'error' : 'warning';
@@ -113,7 +111,6 @@ const QRScanner = () => {
   };
 
   return (
-    //make
     <div className="min-vh-100 pa3 pa4-ns">
       <div className="mw7 center">
         <div className="card">
