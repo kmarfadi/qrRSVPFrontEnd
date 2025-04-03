@@ -52,7 +52,8 @@ const QRScanner = () => {
     const scanner = new Html5QrcodeScanner(
       "reader",
       {
-        fps: 2,
+        //make scanner once every 2 seconds
+        fps: 0.5,
         qrbox: { width: 250, height: 250 },
       },
       false
