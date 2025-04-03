@@ -95,8 +95,8 @@ const QRScanner = () => {
 
     try {
       const response = await api.verifyQRCode(cleanCode);
-      setLocalStatus({ type: 'success', message: response.message });
-      setGlobalStatus({ type: 'success', message: response.message });
+      setLocalStatus({ type: 'success', message: response.message+ ' ' + cleanCode + ' is Welcome to the Party'});
+      setGlobalStatus({ type: 'success', message: response.message+ ' ' + cleanCode + ' is Welcome to the Party'});
       stopScanner();
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'Error verifying QR code';
