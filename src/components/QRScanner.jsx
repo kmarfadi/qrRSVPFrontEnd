@@ -95,12 +95,26 @@ const QRScanner = () => {
 
     try {
       const data = await api.verifyQRCode(cleanCode);
+      //show chrome notification if code is valid or not
+      if (data.valid) {
+        new Notification('Code is valid', {
+          body: data.message,
+          icon: 'https://example.com/icon.png'
+        });
+      }
       setLocalStatus({ type: 'success', message: data.message });
       setGlobalStatus({ type: 'success', message: data.message });
 
       // Temporarily disable scanning to avoid rapid duplicate scans
       
     } catch (error) {
+      //show chrome notification if code is not valid
+      if (!data.valid) {
+        new Notification('Code is not valid', {
+          body: data.message,
+          icon: 'https://example.com/icon.png'
+        });
+      }
       const statusType = error.response?.data?.error === 'QR code already used' ? 'error' : 'warning';
       setLocalStatus({ type: statusType, message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code' });
       setGlobalStatus({ type: statusType, message: error.response?.data?.details || error.response?.data?.error || 'Error verifying QR code' });
