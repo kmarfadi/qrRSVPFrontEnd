@@ -89,8 +89,8 @@ const QRScanner = () => {
 
   const handleScanSuccess = async (decodedText) => {
     const cleanCode = decodedText.trim();
-
-    if (cleanCode === lastScannedCode) return;
+    //if the code is the same as the last scanned code fuck it scan again
+    //if (cleanCode === lastScannedCode) return;
     setLastScannedCode(cleanCode);
 
     try {
