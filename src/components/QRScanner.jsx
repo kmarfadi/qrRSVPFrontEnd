@@ -19,13 +19,13 @@ const QRScanner = () => {
     return () => stopScanner();
   }, []);
 
-  useEffect(() => {
-    if (localStatus?.message) {
-      setTimeout(() => {
-        alert(localStatus.message);
-      }, 200);
-    }
-  }, [localStatus]);
+  // useEffect(() => {
+  //   if (localStatus?.message) {
+  //     setTimeout(() => {
+  //       alert(localStatus.message);
+  //     }, 200);
+  //   }
+  // }, [localStatus]);
 
   const verifyPassword = () => {
     if (password === '0000') {
@@ -62,15 +62,9 @@ const QRScanner = () => {
       );
       
       scannerInstance.render(handleScanSuccess, (errorMessage) => {
-        console.warn(errorMessage);
-      
-        // Suppress "No code detected" type errors
-        if (errorMessage.includes("parse")) return;
-      
         setLocalStatus({ type: 'error', message: errorMessage });
         setGlobalStatus({ type: 'error', message: errorMessage });
       });
-      
       
       setIsScanning(true);
     }, 100);
