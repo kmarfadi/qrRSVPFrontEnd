@@ -62,9 +62,15 @@ const QRScanner = () => {
       );
       
       scannerInstance.render(handleScanSuccess, (errorMessage) => {
+        console.warn(errorMessage);
+      
+        // Suppress "No code detected" type errors
+        if (errorMessage.includes("parse")) return;
+      
         setLocalStatus({ type: 'error', message: errorMessage });
         setGlobalStatus({ type: 'error', message: errorMessage });
       });
+      
       
       setIsScanning(true);
     }, 100);
